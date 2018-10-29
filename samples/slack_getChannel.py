@@ -1,4 +1,4 @@
-;import os
+import os
 from slackclient import SlackClient
 
 slack_token = os.environ["SLACK_BOT_API_TOKEN"]

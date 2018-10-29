@@ -1,5 +1,6 @@
 import os
 import time
+import subprocess
 from slackclient import SlackClient
 
 slack_token = os.environ["SLACK_BOT_API_TOKEN"]
@@ -14,6 +15,7 @@ if sc.rtm_connect():
 #                if event['user'] == (対象ユーザのID) and event['type'] == 'message':
                 if event['type'] == 'message':
                     print(request)
+
                     sc.api_call(
                         "chat.postMessage",
                         channel="CDK2QH970",

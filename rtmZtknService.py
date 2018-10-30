@@ -7,7 +7,7 @@ from slackclient import SlackClient
 CLEOS = "docker exec -i eosio /opt/eosio/bin/cleos --wallet-url http://127.0.0.1:5555 -u https://jungle.eosio.cr:443 "
 
 slack_token = os.environ["SLACK_BOT_API_TOKEN"]
-wallet_pass = os.environ["CLEOS_WALLET_PASS"]
+wallet_pwd = os.environ["CLEOS_WALLET_PASS"]
 ADMIN_PUBLIC_KEY = "EOS712dUcdRJSqNDYQ4jVMZqfTspZCKtxeQ1JnkHpDByeFKbeom8W"
 
 sc = SlackClient(slack_token)

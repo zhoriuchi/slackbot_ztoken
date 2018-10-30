@@ -7,8 +7,7 @@ from slackclient import SlackClient
 CLEOS = "docker exec -i eosio /opt/eosio/bin/cleos --wallet-url http://127.0.0.1:5555 -u https://jungle.eosio.cr:443 "
 
 slack_token = os.environ["SLACK_BOT_API_TOKEN"]
-#wallet_pass = os.environ["CLEOS_WALLET_PASS"]
-wallet_pass = "PW5JrvdvBYYDsnphVy2NwRUQAffoZdysz5YSaDnqJQJhxJo3FsnPW"
+wallet_pass = os.environ["CLEOS_WALLET_PASS"]
 ADMIN_PUBLIC_KEY = "EOS712dUcdRJSqNDYQ4jVMZqfTspZCKtxeQ1JnkHpDByeFKbeom8W"
 
 sc = SlackClient(slack_token)
@@ -22,7 +21,7 @@ if sc.rtm_connect():
                     print(request)
 
                     # Unlock wallet 
-                    cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pass;
+                    cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pwd;
                     subprocess.call(cmd.split())
 
                     # Check if user's account exist
@@ -64,7 +63,7 @@ if sc.rtm_connect():
                     if 'item_user' in event and not event['user'] == event['item_user']:
 
                         # Unlock wallet 
-                        cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pass;
+                        cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pwd;
                         subprocess.call(cmd.split())
 
                         # Check if user's account exist

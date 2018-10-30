@@ -11,8 +11,7 @@ slack_token = os.environ["SLACK_BOT_API_TOKEN"]
 CLEOS = "docker exec -i eosio /opt/eosio/bin/cleos --wallet-url http://127.0.0.1:5555 -u https://jungle.eosio.cr:443 "
 
 #EOS settings
-#wallet_pass = os.environ["CLEOS_WALLET_PASS"]
-wallet_pass = "PW5JrvdvBYYDsnphVy2NwRUQAffoZdysz5YSaDnqJQJhxJo3FsnPW"
+wallet_pwd = os.environ["CLEOS_WALLET_PASS"]
 ADMIN_PUBLIC_KEY = "EOS712dUcdRJSqNDYQ4jVMZqfTspZCKtxeQ1JnkHpDByeFKbeom8W"
 
 #************************
@@ -70,7 +69,7 @@ for a in eos_accounts:
 # Create EOS account if not exist
 #************************
 # Unlock wallet 
-cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pass;
+cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pwd;
 subprocess.call(cmd.split())
 
 for a in slack_accounts:
@@ -79,10 +78,3 @@ for a in slack_accounts:
 		cmd = CLEOS + 'system newaccount --stake-net "1.0000 EOS" --stake-cpu "1.0000 EOS" --buy-ram-bytes 4096 kenichieosio ' + a + ' ' + ADMIN_PUBLIC_KEY + ' ' + ADMIN_PUBLIC_KEY
 #		print(cmd)
 		subprocess.call(cmd, shell=True)
-
-
-#(app_env) MBP13JAL-NC0066:slackztknbot knakao$ docker exec -i eosio /opt/eosio/bin/cleos --wallet-url http://127.0.0.1:5555 -u https://jungle.eosio.cr:443 wallet create -n ztknwallet --to-console
-#Creating wallet: ztknwallet
-#Save password to use in the future to unlock this wallet.
-#Without password imported keys will not be retrievable.
-#"PW5JrvdvBYYDsnphVy2NwRUQAffoZdysz5YSaDnqJQJhxJo3FsnPW"

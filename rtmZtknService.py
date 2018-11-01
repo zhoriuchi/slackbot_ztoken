@@ -2,6 +2,7 @@ import os
 import time
 import json
 import subprocess
+import changeUserStatus
 from slackclient import SlackClient
 
 CLEOS = "docker exec -i eosio /opt/eosio/bin/cleos --wallet-url http://127.0.0.1:5555 -u https://jungle.eosio.cr:443 "
@@ -56,7 +57,7 @@ if sc.rtm_connect():
 #                        thread_ts=event['ts'],
                         reply_broadcast=True
                     )
-
+                    changeUserStatus.changeStatus(slack_token, event['user'], data['rows'][0]['balance'])
                 elif event['type'] == 'reaction_added':
                     print(request)
 
@@ -115,6 +116,7 @@ if sc.rtm_connect():
 #                            thread_ts=event['ts'],
                             reply_broadcast=True
                         )
+                        changeUserStatus.changeStatus(slack_token, event['user'], data['rows'][0]['balance'])
         time.sleep(1)
 else:
     print("Connection Failed")

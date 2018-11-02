@@ -72,11 +72,10 @@ if sc.rtm_connect():
 
     while sc.server.connected is True:
         request = sc.rtm_read()
-
         for event in request:
             if 'user' in event:
                 if event['type'] == 'message':
-                    print(request)
+#                    print(request)
 
                     # Unlock wallet 
                     cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pwd;
@@ -102,11 +101,15 @@ if sc.rtm_connect():
                     sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + ', ' + 'balance: ' + balance
                     sc.api_call(
                         "chat.postMessage",
-                        channel=event['channel'],
+                        #"chat.postEphemeral",
+                        #user=event['user'],
+                        #channel=event['channel'],
+                        channel=event['user'],
                         text=sltext,
-#                        thread_ts=event['ts'],
-                        reply_broadcast=True
+                        #thread_ts=event['ts'],
+                        #reply_broadcast=True
                     )
+
                     changeUserStatus.changeStatus(slack_token, event['user'], balance)
                 elif event['type'] == 'reaction_added':
                     print(request)
@@ -143,11 +146,15 @@ if sc.rtm_connect():
                         sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + 'balance: ' + r_balance + '\n' + '<@'+event['item_user'] + '> ' 'added: ' + reward + 'balance: ' + i_balance
                         sc.api_call(
                             "chat.postMessage",
-                            channel=event['item']['channel'],
+                            #"chat.postEphemeral",
+                            #user=event['user'],
+                            #channel=event['channel'],
+                            channel=event['user'],
                             text=sltext,
-#                            thread_ts=event['ts'],
-                            reply_broadcast=True
+                            #thread_ts=event['ts'],
+                            #reply_broadcast=True
                         )
+
                         changeUserStatus.changeStatus(slack_token, event['user'], r_balance)
                         changeUserStatus.changeStatus(slack_token, event['user'], i_balance)
         time.sleep(1)

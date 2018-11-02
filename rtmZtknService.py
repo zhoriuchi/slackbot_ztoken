@@ -16,9 +16,61 @@ REWARD_POST_MESSAGE = "10.00 ZTKN"
 REWARD_REPLY_MESSAGE = "5.00 ZTKN"
 REWARD_REACTION = "1.00 ZTKN"
 
+#List for keeping EOS accounts
+eos_accounts = []
+
+#************************
+# Get EOS accounts
+#************************
+def get_EOS_accounts():
+    #CLEOS command
+    cmd = CLEOS + "get accounts " + ADMIN_PUBLIC_KEY
+    res = subprocess.check_output(cmd.split())
+
+    #JSON convert
+    my_json = res.decode('utf8')
+    data = json.loads(my_json)
+
+    accounts = data['account_names']
+#    for a in eos_accounts:
+#        print(a)
+    return accounts
+
+#************************
+# Transfer "reward"(token) to the "account"
+#************************
+def transfer_token(account, reward):
+    if account in eos_accounts:
+        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
+        print(cmd)
+        subprocess.call(cmd, shell=True)
+    else:
+        pass #ToDo:エラー通知を送りたい
+
+#************************
+# Get Token balance of the account
+#************************
+def get_Token_balance(account):
+    cmd = CLEOS + 'get table kenichieosio ' + account + ' accounts'
+    res = subprocess.check_output(cmd.split())
+    print(res)
+
+    #JSON convert
+    my_json = res.decode('utf8')
+    data = json.loads(my_json)
+    print(data)
+
+    return data['rows'][0]['balance']
+
+#************************
+# Main
+#************************
 sc = SlackClient(slack_token)
 if sc.rtm_connect():
-  while sc.server.connected is True:
+
+    eos_accounts = get_EOS_accounts()
+
+    while sc.server.connected is True:
         request = sc.rtm_read()
 
         for event in request:
@@ -30,11 +82,6 @@ if sc.rtm_connect():
                     cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pwd;
                     subprocess.call(cmd.split())
 
-                    # Check if user's account exist
-#                    cmd = CLEOS + "get accounts " + ADMIN_PUBLIC_KEY
-#                    res = subprocess.Popen(cmd.split())
-#                    print(res)
-
                     # Convert to EOS account
                     userid = event['user'].lower()
                     dst = userid.translate(str.maketrans('67890', 'fghij'))
@@ -45,20 +92,14 @@ if sc.rtm_connect():
                         reward = REWARD_REPLY_MESSAGE
                     else:
                         reward = REWARD_POST_MESSAGE
-                    cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
-                    print(cmd)
-                    subprocess.call(cmd, shell=True)
 
-                    # Check the ZTKN balance of the user
-                    cmd = CLEOS + 'get table kenichieosio ' + account + ' accounts'
-                    res = subprocess.check_output(cmd.split())
-                    print(res)
+                    transfer_token(account, reward)
 
-                    #JSON convert
-                    my_json = res.decode('utf8')
-                    data = json.loads(my_json)
-                    print(data)
-                    sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + ', ' + 'balance: ' + data['rows'][0]['balance']
+                    # Get the ZTKN balance of the user
+                    balance = get_Token_balance(account)
+
+                    # Post a message to slack channel
+                    sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + ', ' + 'balance: ' + balance
                     sc.api_call(
                         "chat.postMessage",
                         channel=event['channel'],
@@ -66,7 +107,7 @@ if sc.rtm_connect():
 #                        thread_ts=event['ts'],
                         reply_broadcast=True
                     )
-                    changeUserStatus.changeStatus(slack_token, event['user'], data['rows'][0]['balance'])
+                    changeUserStatus.changeStatus(slack_token, event['user'], balance)
                 elif event['type'] == 'reaction_added':
                     print(request)
 
@@ -75,11 +116,6 @@ if sc.rtm_connect():
                         # Unlock wallet 
                         cmd = CLEOS + "wallet unlock -n ztknwallet --password " + wallet_pwd;
                         subprocess.call(cmd.split())
-
-                        # Check if user's account exist
-    #                    cmd = CLEOS + "get accounts " + ADMIN_PUBLIC_KEY
-    #                    res = subprocess.Popen(cmd.split())
-    #                    print(res)
 
                         # Convert to EOS account
                         r_userid = event['user'].lower()
@@ -92,33 +128,19 @@ if sc.rtm_connect():
 
                         # Transfer ZTKN to users
                         reward = REWARD_REACTION
-                        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + r_account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
-                        print(cmd)
-                        subprocess.call(cmd, shell=True)
+                        transfer_token(r_account, reward)
 
-                        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + i_account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
-                        print(cmd)
-                        subprocess.call(cmd, shell=True)
+                        reward = REWARD_REACTION
+                        transfer_token(i_account, reward)
 
-                        # Check the ZTKN balance of the users
-                        cmd = CLEOS + 'get table kenichieosio ' + r_account + ' accounts'
-                        r_res = subprocess.check_output(cmd.split())
-                        print(r_res)
+                        # Get the ZTKN balance of the user
+                        r_balance = get_Token_balance(r_account)
 
-                        cmd = CLEOS + 'get table kenichieosio ' + i_account + ' accounts'
-                        i_res = subprocess.check_output(cmd.split())
-                        print(i_res)
+                        # Get the ZTKN balance of the user
+                        i_balance = get_Token_balance(i_account)
 
-                        #JSON convert
-                        my_json = r_res.decode('utf8')
-                        r_data = json.loads(my_json)
-                        print(r_data)
-
-                        my_json = i_res.decode('utf8')
-                        i_data = json.loads(my_json)
-                        print(i_data)
-
-                        sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + 'balance: ' + r_data['rows'][0]['balance'] + '\n' + '<@'+event['item_user'] + '> ' 'added: ' + reward + 'balance: ' + i_data['rows'][0]['balance']
+                        # Post a message to slack channel
+                        sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + 'balance: ' + r_balance + '\n' + '<@'+event['item_user'] + '> ' 'added: ' + reward + 'balance: ' + i_balance
                         sc.api_call(
                             "chat.postMessage",
                             channel=event['item']['channel'],
@@ -126,8 +148,8 @@ if sc.rtm_connect():
 #                            thread_ts=event['ts'],
                             reply_broadcast=True
                         )
-                        changeUserStatus.changeStatus(slack_token, event['user'], r_data['rows'][0]['balance'])
-                        changeUserStatus.changeStatus(slack_token, event['user'], i_data['rows'][0]['balance'])
+                        changeUserStatus.changeStatus(slack_token, event['user'], r_balance)
+                        changeUserStatus.changeStatus(slack_token, event['user'], i_balance)
         time.sleep(1)
 else:
     print("Connection Failed")

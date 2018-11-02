@@ -11,6 +11,11 @@ slack_token = os.environ["SLACK_BOT_API_TOKEN"]
 wallet_pwd = os.environ["CLEOS_WALLET_PASS"]
 ADMIN_PUBLIC_KEY = "EOS712dUcdRJSqNDYQ4jVMZqfTspZCKtxeQ1JnkHpDByeFKbeom8W"
 
+#Reward volume settings
+REWARD_POST_MESSAGE = "10.00 ZTKN"
+REWARD_REPLY_MESSAGE = "5.00 ZTKN"
+REWARD_REACTION = "1.00 ZTKN"
+
 sc = SlackClient(slack_token)
 if sc.rtm_connect():
   while sc.server.connected is True:
@@ -36,7 +41,11 @@ if sc.rtm_connect():
                     account = "zcp"+dst
 
                     # Transfer ZTKN to user
-                    cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + account + '",' +' "quantity":"10.00 ZTKN", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
+                    if 'thread_ts' in event:
+                        reward = REWARD_REPLY_MESSAGE
+                    else:
+                        reward = REWARD_POST_MESSAGE
+                    cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
                     print(cmd)
                     subprocess.call(cmd, shell=True)
 
@@ -49,7 +58,7 @@ if sc.rtm_connect():
                     my_json = res.decode('utf8')
                     data = json.loads(my_json)
                     print(data)
-                    sltext = '<@'+event['user'] + '> ' + 'added: 10 ZTKN, ' + 'balance: ' + data['rows'][0]['balance']
+                    sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + ', ' + 'balance: ' + data['rows'][0]['balance']
                     sc.api_call(
                         "chat.postMessage",
                         channel=event['channel'],
@@ -82,11 +91,12 @@ if sc.rtm_connect():
                         i_account = "zcp"+dst
 
                         # Transfer ZTKN to users
-                        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + r_account + '",' +' "quantity":"1.00 ZTKN", "memo":"slack reaction did"}' + "'" + ' -p kenichieosio'
+                        reward = REWARD_REACTION
+                        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + r_account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
                         print(cmd)
                         subprocess.call(cmd, shell=True)
 
-                        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + i_account + '",' +' "quantity":"1.00 ZTKN", "memo":"slack reaction received"}' + "'" + ' -p kenichieosio'
+                        cmd = CLEOS + 'push action kenichieosio transfer ' + "'" + '{"from":"kenichieosio", "to":' + '"' + i_account + '",' +' "quantity":"' + reward + '", "memo":"slack message sent"}' + "'" + ' -p kenichieosio'
                         print(cmd)
                         subprocess.call(cmd, shell=True)
 
@@ -108,7 +118,7 @@ if sc.rtm_connect():
                         i_data = json.loads(my_json)
                         print(i_data)
 
-                        sltext = '<@'+event['user'] + '> ' + 'added: 1 ZTKN, ' + 'balance: ' + r_data['rows'][0]['balance'] + '\n' + '<@'+event['item_user'] + '> ' 'added: 1 ZTKN, ' + 'balance: ' + i_data['rows'][0]['balance']
+                        sltext = '<@'+event['user'] + '> ' + 'added: ' + reward + 'balance: ' + r_data['rows'][0]['balance'] + '\n' + '<@'+event['item_user'] + '> ' 'added: ' + reward + 'balance: ' + i_data['rows'][0]['balance']
                         sc.api_call(
                             "chat.postMessage",
                             channel=event['item']['channel'],
@@ -116,7 +126,8 @@ if sc.rtm_connect():
 #                            thread_ts=event['ts'],
                             reply_broadcast=True
                         )
-                        changeUserStatus.changeStatus(slack_token, event['user'], data['rows'][0]['balance'])
+                        changeUserStatus.changeStatus(slack_token, event['user'], r_data['rows'][0]['balance'])
+                        changeUserStatus.changeStatus(slack_token, event['user'], i_data['rows'][0]['balance'])
         time.sleep(1)
 else:
     print("Connection Failed")
